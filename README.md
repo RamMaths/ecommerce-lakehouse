@@ -222,52 +222,193 @@ Compare query costs and performance across Bronze/Silver/Gold layers
 ## Getting Started
 
 ### Prerequisites
+
+**Required:**
+- Docker Desktop installed ([Download](https://www.docker.com/products/docker-desktop))
+- Docker Compose (included with Docker Desktop)
+- Git (to clone the repository)
+
+**For Step 2 (Terraform):**
 - AWS Account with appropriate permissions
-- Docker and Docker Compose installed
 - Terraform 1.5+ installed
-- Python 3.11+ installed
-- PostgreSQL client tools
+- AWS CLI configured
 
-### Quick Start
+### Step-by-Step Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd lakehouse-poc
-   ```
+#### 1. Clone the Repository
 
-2. **Set up Django backend**
-   ```bash
-   cd django-backend
-   cp .env.example .env
-   docker-compose up -d
-   python manage.py migrate
-   python manage.py seed_all --scale medium
-   ```
+```bash
+git clone <repository-url>
+cd lakehouse-poc
+```
 
-3. **Provision AWS infrastructure**
-   ```bash
-   cd ../terraform-infra/environments/dev
-   cp terraform.tfvars.example terraform.tfvars
-   # Edit terraform.tfvars with your configuration
-   terraform init
-   terraform plan
-   terraform apply
-   ```
+#### 2. Start Django Backend
 
-4. **Verify data flow**
-   - Check DMS replication task status
-   - Run Glue crawlers
-   - Execute sample Athena queries
+```bash
+# Navigate to Django backend directory
+cd django-backend
+
+# Copy environment file (optional - defaults work for local development)
+cp .env.example .env
+
+# Start Docker containers (PostgreSQL + Django)
+docker-compose up -d
+
+# Wait for services to be ready (about 10 seconds)
+# You can check status with:
+docker-compose ps
+```
+
+#### 3. Initialize Database
+
+```bash
+# Create database tables
+docker-compose exec django python manage.py migrate
+
+# Create admin user for Django admin panel
+docker-compose exec django python manage.py createsuperuser
+# Enter username: admin
+# Enter email: admin@example.com
+# Enter password: (your choice, minimum 8 characters)
+```
+
+#### 4. Generate Sample Data
+
+```bash
+# Seed data with medium scale (recommended for demo)
+docker-compose exec django python manage.py seed_all --scale medium
+
+# This will create:
+# - 8 tenants
+# - 6,400 customers
+# - 800 products
+# - ~48,000 orders
+# - ~293,000 events
+# - 1,920 subscriptions
+# - ~19,000 invoices
+# 
+# Time: ~2-3 minutes
+```
+
+**Available scales:**
+- `--scale small`: ~17K total records (~30 seconds)
+- `--scale medium`: ~540K total records (~2-3 minutes) ⭐ Recommended
+- `--scale large`: ~3M total records (~10-15 minutes)
+
+#### 5. Configure PostgreSQL for DMS
+
+```bash
+# Create publication for AWS DMS replication
+docker-compose exec postgres psql -U lakehouse_user -d lakehouse_poc \
+  -c "CREATE PUBLICATION dms_publication FOR ALL TABLES;"
+
+# Verify publication was created
+docker-compose exec postgres psql -U lakehouse_user -d lakehouse_poc -c "\dRp+"
+```
+
+#### 6. Verify Installation
+
+```bash
+# Check data was created
+docker-compose exec postgres psql -U lakehouse_user -d lakehouse_poc -c \
+  "SELECT 'tenants' as table_name, COUNT(*) FROM core_tenant 
+   UNION ALL SELECT 'customers', COUNT(*) FROM core_customer 
+   UNION ALL SELECT 'orders', COUNT(*) FROM core_order;"
+
+# Access Django admin panel
+open http://localhost:8000/admin
+# Login with the superuser credentials you created
+```
+
+### Troubleshooting Setup
+
+**Docker containers won't start:**
+```bash
+# Check if ports 5432 or 8000 are already in use
+lsof -i :5432
+lsof -i :8000
+
+# Stop any conflicting services or change ports in docker-compose.yml
+```
+
+**PostgreSQL connection errors:**
+```bash
+# Check PostgreSQL is ready
+docker-compose exec postgres pg_isready -U lakehouse_user
+
+# View PostgreSQL logs
+docker-compose logs postgres
+```
+
+**Migration errors:**
+```bash
+# Reset database and start fresh
+docker-compose down -v
+docker-compose up -d
+sleep 10
+docker-compose exec django python manage.py migrate
+```
+
+**Out of disk space:**
+```bash
+# Clean up Docker resources
+docker system prune -a --volumes
+
+# Or increase Docker Desktop disk allocation:
+# Docker Desktop → Settings → Resources → Disk image size
+```
+
+### What You'll Have After Setup
+
+✅ **Running Services:**
+- PostgreSQL 15 with logical replication enabled
+- Django 4.2 application with admin interface
+- 8 data models representing multi-tenant e-commerce platform
+
+✅ **Sample Data:**
+- Multi-tenant data across 8 organizations
+- 6 months of historical data
+- Realistic distributions and patterns
+- Ready for AWS DMS replication
+
+✅ **Access Points:**
+- Django Admin: http://localhost:8000/admin
+- PostgreSQL: localhost:5432 (database: lakehouse_poc)
+- API: http://localhost:8000 (if you add endpoints)
+
+### Next Steps After Setup
+
+1. **Explore the data** in Django admin
+2. **Run sample SQL queries** (see [Quick Reference](./QUICK_REFERENCE.md))
+3. **Verify data quality** and distributions
+4. **Document connection details** for Terraform
+5. **Proceed to Step 2**: Terraform infrastructure implementation
+
+See [Django Backend README](./django-backend/README.md) for detailed usage instructions.
+
+### Terraform Infrastructure (Step 2)
+
+Coming soon - After Django backend is running and generating data.
+
+```bash
+cd terraform-infra/environments/dev
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your AWS configuration
+terraform init
+terraform plan
+terraform apply
+```
+
+See [Terraform Infrastructure Plan](./docs/TERRAFORM_INFRA_PLAN.md) for detailed architecture.
 
 ## Documentation
 
-- [Django Backend Implementation Plan](./DJANGO_BACKEND_PLAN.md) - Detailed Django setup and data generation
-- [Terraform Infrastructure Plan](./TERRAFORM_INFRA_PLAN.md) - Complete AWS architecture and modules
-- [Architecture Diagrams](./docs/ARCHITECTURE.md) - Visual representations (to be created)
-- [Deployment Guide](./docs/DEPLOYMENT.md) - Step-by-step deployment instructions (to be created)
-- [Cost Analysis](./docs/COST_ESTIMATION.md) - Detailed cost breakdown (to be created)
-- [Troubleshooting](./docs/TROUBLESHOOTING.md) - Common issues and solutions (to be created)
+- **[Environment Replication Guide](./REPLICATION_GUIDE.md)** - Complete step-by-step setup instructions ⭐
+- [Django Backend README](./django-backend/README.md) - Django usage and commands
+- [Quick Reference Guide](./QUICK_REFERENCE.md) - Common commands and SQL queries
+- [Django Backend Implementation Plan](./docs/DJANGO_BACKEND_PLAN.md) - Detailed Django architecture
+- [Terraform Infrastructure Plan](./docs/TERRAFORM_INFRA_PLAN.md) - AWS architecture and modules
+- [Implementation Status](./IMPLEMENTATION_STATUS.md) - Project progress tracker
 
 ## Security Considerations
 
@@ -295,6 +436,80 @@ This is a proof-of-concept project for a residency program. Contributions and su
 ## License
 
 [Specify your license here]
+
+## Common Issues & Solutions
+
+### Issue: "relation core_tenant does not exist"
+**Solution:** You need to run migrations first
+```bash
+docker-compose exec django python manage.py migrate
+```
+
+### Issue: "duplicate key value violates unique constraint"
+**Solution:** Clean existing data before reseeding
+```bash
+docker-compose exec django python manage.py seed_all --scale medium --clean
+```
+
+### Issue: Docker containers keep restarting
+**Solution:** Check logs and ensure PostgreSQL is healthy
+```bash
+docker-compose logs postgres
+docker-compose logs django
+# Wait for PostgreSQL to be fully ready before running migrations
+```
+
+### Issue: Slow data generation
+**Solution:** 
+- Use `--scale small` for testing
+- Ensure Docker has enough resources (4GB+ RAM recommended)
+- Check Docker Desktop settings: Resources → Advanced
+
+### Issue: Can't connect to PostgreSQL from host machine
+**Solution:** Ensure port 5432 is exposed and not blocked
+```bash
+# Test connection
+psql -h localhost -p 5432 -U lakehouse_user -d lakehouse_poc
+
+# If using a different port, update docker-compose.yml
+```
+
+### Issue: Django admin shows "CSRF verification failed"
+**Solution:** Clear browser cookies or use incognito mode
+
+## Useful Commands Reference
+
+```bash
+# Start services
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Restart a service
+docker-compose restart django
+
+# Access Django shell
+docker-compose exec django python manage.py shell_plus
+
+# Connect to PostgreSQL
+docker-compose exec postgres psql -U lakehouse_user -d lakehouse_poc
+
+# Backup database
+docker-compose exec postgres pg_dump -U lakehouse_user lakehouse_poc > backup.sql
+
+# Check data counts
+docker-compose exec postgres psql -U lakehouse_user -d lakehouse_poc -c \
+  "SELECT 'orders' as table, COUNT(*) FROM core_order;"
+```
+
+## Project Status
+
+- ✅ **Django Backend (Step 1)**: Complete and tested
+- 🚧 **Terraform Infrastructure (Step 2)**: Planned (see [Terraform Plan](./docs/TERRAFORM_INFRA_PLAN.md))
 
 ## Contact
 

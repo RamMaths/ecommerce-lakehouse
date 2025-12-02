@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: lakehouse_postgres
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-lakehouse_poc}
+      POSTGRES_USER: ${DATABASE_USER:-lakehouse_user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-secure_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_replication.sql:/docker-entrypoint-initdb.d/init_replication.sql
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+      - "-c"
+      - "max_replication_slots=4"
+      - "-c"
+      - "max_wal_senders=4"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-lakehouse_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  django:
+    build: .
+    container_name: lakehouse_django
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_NAME: ${DATABASE_NAME:-lakehouse_poc}
+      DATABASE_USER: ${DATABASE_USER:-lakehouse_user}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-secure_password}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-secret-key-change-in-production}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
