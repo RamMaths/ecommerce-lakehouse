@@ -388,18 +388,38 @@ See [Django Backend README](./django-backend/README.md) for detailed usage instr
 
 ### Terraform Infrastructure (Step 2)
 
-Coming soon - After Django backend is running and generating data.
+After Django backend is running with data:
 
 ```bash
-cd terraform-infra/environments/dev
+# Navigate to Terraform directory
+cd terraform-infra
+
+# Configure variables
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your AWS configuration
+nano terraform.tfvars  # Update source_db_host and source_db_password
+
+# Deploy infrastructure
 terraform init
 terraform plan
-terraform apply
+terraform apply  # Type 'yes' to confirm
+
+# Wait 10-15 minutes for deployment
 ```
 
-See [Terraform Infrastructure Plan](./docs/TERRAFORM_INFRA_PLAN.md) for detailed architecture.
+**What gets deployed:**
+- 5 S3 buckets (Bronze/Silver/Gold + Scripts + Athena)
+- AWS DMS for PostgreSQL → S3 replication
+- AWS Glue Data Catalog (3 databases, 3 crawlers)
+- Amazon Athena workgroup with 5 named queries
+- IAM roles and policies
+
+**After deployment:**
+1. Test DMS source endpoint connection
+2. Start DMS replication task
+3. Run Glue crawler to discover tables
+4. Query data in Athena
+
+See [Terraform README](./terraform-infra/README.md) and [Deployment Guide](./terraform-infra/DEPLOYMENT_GUIDE.md) for detailed instructions.
 
 ## Documentation
 

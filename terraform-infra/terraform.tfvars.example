@@ -1,0 +1,39 @@
+# Copy this file to terraform.tfvars and fill in your values
+# cp terraform.tfvars.example terraform.tfvars
+
+# Project Configuration
+project_name = "lakehouse-poc"
+environment  = "dev"
+aws_region   = "us-east-1"
+aws_profile  = "ramses"
+owner        = "your-name"
+
+# Django PostgreSQL Source Database
+# Option 1: Local Docker (requires public IP or ngrok)
+# source_db_host = "your-public-ip-or-ngrok-url"
+
+# Option 2: Deploy Django to EC2 (recommended for POC)
+# source_db_host = "ec2-instance-private-ip"
+
+# Option 3: Use RDS as source (for testing)
+# source_db_host = "your-rds-endpoint.rds.amazonaws.com"
+
+source_db_host     = "CHANGE_ME"  # Your Django PostgreSQL host
+source_db_port     = 5432
+source_db_name     = "lakehouse_poc"
+source_db_username = "lakehouse_user"
+source_db_password = "secure_password"  # Change to your actual password
+
+# DMS Configuration
+dms_instance_class     = "dms.t3.medium"
+dms_allocated_storage  = 100
+
+# Glue Configuration
+glue_worker_type       = "G.1X"
+glue_number_of_workers = 2
+
+# Additional Tags (optional)
+additional_tags = {
+  CostCenter = "Engineering"
+  Project    = "Residency"
+}
