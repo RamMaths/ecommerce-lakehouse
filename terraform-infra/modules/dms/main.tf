@@ -1,6 +1,6 @@
 # AWS DMS configuration for PostgreSQL to S3 replication
 
-# DMS Subnet Group (using default VPC for simplicity)
+# DMS Subnet Group (using default VPC)
 data "aws_vpc" "default" {
   default = true
 }
@@ -12,10 +12,27 @@ data "aws_subnets" "default" {
   }
 }
 
+# Get availability zones
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+# Create an additional subnet in a different AZ for DMS
+resource "aws_subnet" "dms_additional" {
+  vpc_id            = data.aws_vpc.default.id
+  cidr_block        = "172.31.64.0/20"  # Different CIDR to avoid conflicts
+  availability_zone = data.aws_availability_zones.available.names[1]
+
+  tags = merge(var.tags, {
+    Name = "${var.project_name}-${var.environment}-dms-subnet-additional"
+  })
+}
+
 resource "aws_dms_replication_subnet_group" "main" {
   replication_subnet_group_id          = "${var.project_name}-${var.environment}-dms-subnet"
   replication_subnet_group_description = "DMS replication subnet group"
-  subnet_ids                           = data.aws_subnets.default.ids
+  # Use existing default subnet + our additional subnet
+  subnet_ids = concat(data.aws_subnets.default.ids, [aws_subnet.dms_additional.id])
 
   tags = var.tags
 }
@@ -26,9 +43,8 @@ resource "aws_dms_replication_instance" "main" {
   replication_instance_class = var.dms_instance_class
   allocated_storage          = var.dms_allocated_storage
   
-  engine_version             = "3.5.2"
   multi_az                   = false
-  publicly_accessible        = true  # Required to connect to external PostgreSQL
+  publicly_accessible        = false  # Using ngrok which provides public connectivity
   
   replication_subnet_group_id = aws_dms_replication_subnet_group.main.id
   
@@ -63,15 +79,13 @@ resource "aws_dms_endpoint" "target" {
   engine_name   = "s3"
 
   s3_settings {
-    bucket_name             = var.target_bucket_name
-    bucket_folder           = "dms-data"
-    compression_type        = "GZIP"
-    data_format             = "parquet"
-    parquet_version         = "parquet-2-0"
-    
-    # Partitioning
-    date_partition_enabled  = true
-    date_partition_sequence = "YYYYMMDD"
+    bucket_name              = var.target_bucket_name
+    bucket_folder            = "dms-data"
+    compression_type         = "GZIP"
+    data_format              = "csv"
+    include_op_for_full_load = true
+    cdc_path                 = "cdc"
+    timestamp_column_name    = "dms_timestamp"
     
     service_access_role_arn = var.dms_service_role_arn
   }
@@ -125,51 +139,16 @@ resource "aws_dms_replication_task" "main" {
   })
 
   replication_task_settings = jsonencode({
-    TargetMetadata = {
-      TargetSchema = ""
-      SupportLobs  = true
-      FullLobMode  = false
-      LobChunkSize = 64
-      LimitedSizeLobMode = true
-      LobMaxSize   = 32
-    }
     FullLoadSettings = {
       TargetTablePrepMode = "DROP_AND_CREATE"
       MaxFullLoadSubTasks = 8
     }
-    Logging = {
-      EnableLogging = true
-      LogComponents = [
-        {
-          Id       = "TRANSFORMATION"
-          Severity = "LOGGER_SEVERITY_DEFAULT"
-        },
-        {
-          Id       = "SOURCE_UNLOAD"
-          Severity = "LOGGER_SEVERITY_DEFAULT"
-        },
-        {
-          Id       = "TARGET_LOAD"
-          Severity = "LOGGER_SEVERITY_DEFAULT"
-        }
-      ]
-    }
     ChangeProcessingDdlHandlingPolicy = {
       HandleSourceTableDropped   = true
       HandleSourceTableTruncated = true
-      HandleSourceTableAltered   = true
     }
-    ChangeProcessingTuning = {
-      BatchApplyPreserveTransaction = true
-      BatchApplyTimeoutMin          = 1
-      BatchApplyTimeoutMax          = 30
-      BatchApplyMemoryLimit         = 500
-      BatchSplitSize                = 0
-      MinTransactionSize            = 1000
-      CommitTimeout                 = 1
-      MemoryLimitTotal              = 1024
-      MemoryKeepTime                = 60
-      StatementCacheSize            = 50
+    Logging = {
+      EnableLogging = true
     }
   })
 
