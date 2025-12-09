@@ -44,7 +44,7 @@ resource "aws_dms_replication_instance" "main" {
   allocated_storage          = var.dms_allocated_storage
   
   multi_az                   = false
-  publicly_accessible        = false  # Using ngrok which provides public connectivity
+  publicly_accessible        = true  # Required for external ngrok connectivity
   
   replication_subnet_group_id = aws_dms_replication_subnet_group.main.id
   
@@ -65,7 +65,7 @@ resource "aws_dms_endpoint" "source" {
   username    = var.source_db_username
   password    = var.source_db_password
 
-  ssl_mode = "none"  # Change to "require" if using SSL
+  ssl_mode = "require"  # SSL enabled for PostgreSQL 15+
 
   tags = merge(var.tags, {
     Name = "${var.project_name}-${var.environment}-source-endpoint"

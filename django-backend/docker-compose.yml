@@ -13,6 +13,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init_replication.sql:/docker-entrypoint-initdb.d/init_replication.sql
+      - ./ssl/server.crt:/var/lib/postgresql/server.crt:ro
+      - ./ssl/server.key:/var/lib/postgresql/server.key:ro
     command:
       - "postgres"
       - "-c"
@@ -21,6 +23,12 @@ services:
       - "max_replication_slots=4"
       - "-c"
       - "max_wal_senders=4"
+      - "-c"
+      - "ssl=on"
+      - "-c"
+      - "ssl_cert_file=/var/lib/postgresql/server.crt"
+      - "-c"
+      - "ssl_key_file=/var/lib/postgresql/server.key"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-lakehouse_user}"]
       interval: 10s

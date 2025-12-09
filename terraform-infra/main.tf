@@ -58,7 +58,7 @@ module "dms" {
   target_bucket_name     = module.s3.bronze_bucket_name
   dms_instance_class     = var.dms_instance_class
   dms_allocated_storage  = var.dms_allocated_storage
-  dms_service_role_arn   = module.iam.dms_service_role_arn
+  dms_service_role_arn   = module.iam.dms_s3_role_arn
   tags                   = local.resource_tags
 
   depends_on = [module.iam, module.s3]
