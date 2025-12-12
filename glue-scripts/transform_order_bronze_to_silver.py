@@ -22,25 +22,27 @@ bronze_df = glueContext.create_dynamic_frame.from_catalog(
     table_name="core_order"
 ).toDF()
 
-# col2=id, col3=tenant_id, col4=customer_id, col5=order_number
-# col6=total, col7=subtotal, col8=tax, col9=discount, col10=status
-# col11=order_date, col12=created_at, col13=updated_at
+# Actual column mapping based on Bronze data (16 columns):
+# col0 = operation, col1 = dms_timestamp, col2 = id
+# col3 = order_number, col4 = status, col5 = subtotal
+# col6 = tax, col7 = shipping, col8 = total
+# col9 = order_date, col10 = shipped_date
+# col11-col12 = metadata, col13 = customer_id, col14 = tenant_id, col15 = timestamps
 
 silver_df = bronze_df \
     .filter(col("col0") == "I") \
     .select(
         col("col2").alias("id"),
-        col("col3").alias("tenant_id"),
-        col("col4").alias("customer_id"),
-        col("col5").alias("order_number"),
-        col("col6").cast("decimal(10,2)").alias("total"),
-        col("col7").cast("decimal(10,2)").alias("subtotal"),
-        col("col8").cast("decimal(10,2)").alias("tax"),
-        col("col9").cast("decimal(10,2)").alias("discount"),
-        col("col10").alias("status"),
-        to_timestamp(col("col11")).alias("order_date"),
-        to_timestamp(col("col12")).alias("created_at"),
-        to_timestamp(col("col13")).alias("updated_at"),
+        col("col14").alias("tenant_id"),
+        col("col13").alias("customer_id"),
+        col("col3").alias("order_number"),
+        col("col4").alias("status"),
+        col("col5").cast("decimal(10,2)").alias("subtotal"),
+        col("col6").cast("decimal(10,2)").alias("tax"),
+        col("col7").cast("decimal(10,2)").alias("shipping"),
+        col("col8").cast("decimal(10,2)").alias("total"),
+        to_timestamp(col("col9")).alias("order_date"),
+        to_timestamp(col("col10")).alias("shipped_date"),
         current_timestamp().alias("processed_at")
     )
 

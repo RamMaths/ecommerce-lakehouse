@@ -1,0 +1,86 @@
+- 4 procedimiento y descripción de las actividades realizadas  
+    - 4.1 Planeación del proyecto
+        - Cronograma de actividades.
+        - Definición de fases del proyecto.
+        - Tecnologías a utilizar.
+        - Entregables esperados.
+        - Objetivo semanal o mensual.
+    - 4.2 Análisis de requerimientos
+        - Requerimientos funcionales del sistema.
+        - Requerimientos no funcionales (rendimiento, seguridad).
+        - Descripción de los datos.
+        - Problema inicial.
+    - 4.3 Diseño del sistema Lakehouse
+        - Diagramas de arquitectura.
+        - Explicación de capas Bronze, Silver y Gold.
+        - Diseño de tablas.
+        - Flujos de ingesta.
+        - Integración con BI.
+    - 4.4 Implementación
+        - Pasos técnicos.
+        - Configuraciones.
+        - Scripts creados.
+        - Pipelines de transformación.
+        - Pruebas iniciales.
+    - 4.5 Pruebas y validación
+        - Tipos de pruebas realizadas.
+        - Criterios de aceptación.
+        - Comparaciones.
+        - Métricas obtenidas.
+        - Fiabilidad.
+- 5. Resultados, planos, graficas, prototipos, etc…
+    - 5.1 Resultados obtenidos
+        - Objetivos cumplidos.
+        - Impacto del proyecto.
+        - Mejoras alcanzadas.
+        - Indicadores logrados.
+    - 5.2 Planos, gráficas y diagramas
+        - Diagramas de flujo.
+        - Gráficas de rendimiento.
+        - Mapas de arquitectura.
+        - Tablas de muestra.
+        - Diagramas de relaciones.
+    - 5.3 Prototipos y programas desarrollados
+        - Scripts ETL.
+        - Notebooks.
+        - APIs creadas.
+        - Dashboards.
+        - Interfaces gráficas (si aplica).
+    - 5.4 Manuales y documentación técnica
+        - Manual de instalación.
+        - Manual de usuario.
+        - Guías técnicas.
+        - Requisitos de sistema.
+        - Procedimiento de actualización.
+    - 5.5 Análisis técnico o económico
+        - Costos aproximados de infraestructura.
+        - Comparación entre tecnologías.
+        - Ahorros por optimización.
+        - Evaluación costo-beneficio.
+- 6 Conclusiones, recomendaciones experiencia profesional adquirida 
+    - 6.1 Conclusiones
+        - Evaluación del cumplimiento de objetivos.
+        - Beneficios más importantes.
+        - Lecciones aprendidas.
+        - Aporte profesional.
+    - 6.2 Recomendaciones
+        - Mejoras para el futuro.
+        - Ajustes técnicos.
+        - Pasos para escalar.
+        - Propuestas metodológicas.
+    - 6.3 Experiencia profesional adquirida
+        - Habilidades técnicas aprendidas.
+        - Habilidades blandas desarrolladas.
+        - Aplicación de conocimientos de la carrera.
+        - Experiencia real en industria.
+    - 7. Competencias desarrolladas/aplicadas
+        - Competencias técnicas.
+        - Competencias transversales.
+        - Relación con materias.
+        - Aplicación en entorno real.
+    - 8. Fuentes de información
+        - Libros.
+        - Artículos.
+        - Documentación oficial.
+        - Tesis.
+        - Citas en formato APA.

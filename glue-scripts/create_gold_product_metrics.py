@@ -22,22 +22,22 @@ print("Creating Gold Layer Product Metrics...")
 
 # Read Silver layer tables
 tenants_df = glueContext.create_dynamic_frame.from_catalog(
-    database="lakehouse-poc_dev_silver",
+    database="lakehouse_poc_dev_silver",
     table_name="tenant"
 ).toDF()
 
 products_df = glueContext.create_dynamic_frame.from_catalog(
-    database="lakehouse-poc_dev_silver",
+    database="lakehouse_poc_dev_silver",
     table_name="product"
 ).toDF()
 
 orderitems_df = glueContext.create_dynamic_frame.from_catalog(
-    database="lakehouse-poc_dev_silver",
+    database="lakehouse_poc_dev_silver",
     table_name="orderitem"
 ).toDF()
 
 orders_df = glueContext.create_dynamic_frame.from_catalog(
-    database="lakehouse-poc_dev_silver",
+    database="lakehouse_poc_dev_silver",
     table_name="order"
 ).toDF()
 
